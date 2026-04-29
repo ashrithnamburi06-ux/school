@@ -15,6 +15,9 @@ import ProtectedRoute from './routes/ProtectedRoute'
 import ChatbotButton from './components/ChatbotButton'
 import ChatWindow from './components/ChatWindow'
 
+import StaffLogin from './pages/StaffLogin'
+import FacultyDashboard from './pages/FacultyDashboard'
+
 function App() {
   return (
     <Router>
@@ -31,12 +34,32 @@ function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/admissions" element={<AdmissionForm />} />
+            <Route path="/login" element={<StaffLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route 
               path="/admin/dashboard" 
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/faculty/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <FacultyDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reception/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <div className="p-20 text-center">
+                    <h1 className="text-4xl font-heading font-bold text-purple-700">Reception Dashboard</h1>
+                    <p className="mt-4 text-gray-600">Welcome to the Winfield Reception Portal</p>
+                  </div>
                 </ProtectedRoute>
               } 
             />
