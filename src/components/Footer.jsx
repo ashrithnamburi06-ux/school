@@ -25,12 +25,10 @@ const Footer = () => {
           >
             <h3 className="text-2xl font-heading font-bold mb-4">Quick Links</h3>
             <ul className="space-y-3 font-body">
-              <li><Link to="/" className="text-white/80 hover:text-white transition-colors">Home</Link></li>
               <li><Link to="/about" className="text-white/80 hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="/academics" className="text-white/80 hover:text-white transition-colors">Academics</Link></li>
-              <li><Link to="/facilities" className="text-white/80 hover:text-white transition-colors">Facilities</Link></li>
-              <li><Link to="/gallery" className="text-white/80 hover:text-white transition-colors">Gallery</Link></li>
               <li><Link to="/contact" className="text-white/80 hover:text-white transition-colors">Contact</Link></li>
+              <li><Link to="/tests" className="text-white/80 hover:text-white transition-colors">Practice Tests</Link></li>
+              <li><Link to="/admissions" className="text-white/80 hover:text-white transition-colors">Admissions</Link></li>
             </ul>
           </motion.div>
 

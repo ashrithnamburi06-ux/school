@@ -8,7 +8,7 @@ import {
 import { auth, db } from './config'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
-const ADMIN_EMAIL = 'admin@winfieldschool.com' // Define master admin email
+const MASTER_ADMIN_EMAIL = 'ashrithnamburi06@gmail.com' // Define master admin email
 
 export const login = async (email, password) => {
   try {
@@ -62,6 +62,8 @@ export const loginWithGoogle = async (userData) => {
         phone: userData.phone,
         facultyId: userData.facultyId,
         role: userData.role,
+        subject: userData.role === 'faculty' ? userData.subject : null,
+        boardAccess: (userData.role === 'faculty' || userData.role === 'reception') ? (userData.boardAccess || 'BOTH') : null,
         approved: false,
         createdAt: new Date().toISOString()
       }

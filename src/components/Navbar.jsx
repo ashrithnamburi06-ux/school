@@ -57,11 +57,10 @@ const Navbar = () => {
 
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/about', label: 'About' },
     { path: '/academics', label: 'Academics' },
+    { path: '/tests', label: 'Practice Tests' },
     { path: '/facilities', label: 'Facilities' },
     { path: '/gallery', label: 'Gallery' },
-    { path: '/contact', label: 'Contact' },
     { path: '/admissions', label: 'Admissions' },
   ]
 

@@ -12,8 +12,21 @@ const StaffLogin = () => {
     name: '',
     phone: '',
     facultyId: '',
-    role: 'faculty'
+    role: 'faculty',
+    subject: '',
+    boardAccess: 'BOTH'
   })
+
+  const subjects = [
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'English',
+    'Computer Science',
+    'Social Studies',
+    'Physical Education'
+  ]
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +41,12 @@ const StaffLogin = () => {
     // Validation
     if (!formData.name || !formData.phone || !formData.facultyId) {
       toast.error('Please fill in all required details before continuing.')
+      return
+    }
+
+    // Subject is mandatory for faculty role
+    if (formData.role === 'faculty' && !formData.subject) {
+      toast.error('Please select your subject specialization for faculty role.')
       return
     }
 
@@ -125,6 +144,38 @@ const StaffLogin = () => {
                 <option value="admin">Admin Request</option>
               </select>
             </div>
+
+            {formData.role === 'faculty' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject Specialization</label>
+                <select
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  required
+                >
+                  <option value="">Select Subject</option>
+                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+
+            {(formData.role === 'faculty' || formData.role === 'reception') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Board Access</label>
+                <select
+                  name="boardAccess"
+                  value={formData.boardAccess}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                >
+                  <option value="CBSE">CBSE Only</option>
+                  <option value="SSC">SSC Only</option>
+                  <option value="BOTH">Both Boards</option>
+                </select>
+              </div>
+            )}
 
             <div className="pt-4">
               <button

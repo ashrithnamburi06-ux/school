@@ -17,6 +17,9 @@ import ChatWindow from './components/ChatWindow'
 
 import StaffLogin from './pages/StaffLogin'
 import FacultyDashboard from './pages/FacultyDashboard'
+import ReceptionDashboard from './pages/ReceptionDashboard'
+import PublicTests from './pages/PublicTests'
+import TestAttempt from './pages/TestAttempt'
 
 function App() {
   return (
@@ -56,13 +59,12 @@ function App() {
               path="/reception/dashboard" 
               element={
                 <ProtectedRoute>
-                  <div className="p-20 text-center">
-                    <h1 className="text-4xl font-heading font-bold text-purple-700">Reception Dashboard</h1>
-                    <p className="mt-4 text-gray-600">Welcome to the Winfield Reception Portal</p>
-                  </div>
+                  <ReceptionDashboard />
                 </ProtectedRoute>
               } 
             />
+            <Route path="/tests" element={<PublicTests />} />
+            <Route path="/test/:testId" element={<TestAttempt />} />
           </Routes>
         </main>
         <Footer />
