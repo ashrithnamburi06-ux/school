@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { logout, onAuthChange, getUserData } from '../firebase/auth'
 import { db } from '../firebase/config'
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore'
 import { 
   approveUser,
   bulkAddStudents
@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../components/LoadingSpinner'
 import EmptyState from '../components/EmptyState'
+import * as XLSX from 'xlsx'
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('contacts')
@@ -65,6 +66,24 @@ const AdminDashboard = () => {
 
   const classes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
   const sections = ['A', 'B', 'C']
+
+  // Export attendance to Excel
+  const exportAttendanceToExcel = (report) => {
+    const data = report.records.map(record => ({
+      'Roll No': record.rollNo,
+      'Name': record.name,
+      'Section': report.section,
+      'Status': record.present ? 'Present' : 'Absent'
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, `Attendance_${report.class}_${report.section}`)
+    
+    const fileName = `Attendance_Class${report.class}_${report.section}_${report.date}.xlsx`
+    XLSX.writeFile(wb, fileName)
+    toast.success('Attendance exported successfully!')
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (user) => {
@@ -131,20 +150,31 @@ const AdminDashboard = () => {
   useEffect(() => {
     let unsubscribe = () => {}
 
-    if (activeTab === 'students' && filter.class && filter.section) {
+    if (activeTab === 'students' && filter.class) {
       setLoading(true)
+      
+      // Build query constraints dynamically
+      const constraints = [where('class', '==', filter.class)]
+      
+      // Add section filter only if selected
+      if (filter.section) {
+        constraints.push(where('section', '==', filter.section))
+      }
+      
+      console.log('Admin: Fetching students with filters:', {
+        class: filter.class,
+        section: filter.section || 'All sections'
+      })
+      
       try {
-        const q = query(
-          collection(db, 'students'),
-          where('class', '==', String(filter.class)),
-          where('section', '==', filter.section)
-        )
+        const q = query(collection(db, 'students'), ...constraints)
         unsubscribe = onSnapshot(q, (snapshot) => {
           try {
             const studentsList = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
             })).sort((a, b) => (a.rollNo || 0) - (b.rollNo || 0))
+            console.log(`Admin: Found ${studentsList.length} students`)
             setStudents(studentsList)
           } catch (err) {
             console.error("Error processing snapshot:", err)
@@ -193,16 +223,26 @@ const AdminDashboard = () => {
   useEffect(() => {
     let unsubscribe = () => {}
 
-    if (activeTab === 'attendance' && filter.date && filter.class && filter.section && filter.timeSlot) {
+    if (activeTab === 'attendance' && filter.date && filter.class) {
       setLoading(true)
       try {
-        const q = query(
-          collection(db, 'attendance'),
+        // Build query constraints dynamically
+        const constraints = [
           where('date', '==', filter.date),
-          where('class', '==', String(filter.class)),
-          where('section', '==', filter.section),
-          where('timeSlot', '==', filter.timeSlot)
-        )
+          where('class', '==', filter.class)
+        ]
+        
+        // Only add section filter if specific section selected
+        if (filter.section) {
+          constraints.push(where('section', '==', filter.section))
+        }
+        
+        // Only add timeSlot filter if specific time selected
+        if (filter.timeSlot) {
+          constraints.push(where('timeSlot', '==', filter.timeSlot))
+        }
+
+        const q = query(collection(db, 'attendance'), ...constraints)
 
         unsubscribe = onSnapshot(q, (snapshot) => {
           try {
@@ -231,7 +271,6 @@ const AdminDashboard = () => {
       }
     } else {
       setAttendanceReports([])
-      // Don't set loading false here
     }
 
     return () => unsubscribe()
@@ -286,23 +325,23 @@ const AdminDashboard = () => {
     setIsSeeding(true)
     const studentsToSeed = [
       // Section A
-      { name: "Arjun", class: "8", section: "A", rollNo: 1, stream: "Non-IIT" },
-      { name: "Ravi", class: "8", section: "A", rollNo: 2, stream: "Non-IIT" },
-      { name: "Kiran", class: "8", section: "A", rollNo: 3, stream: "Non-IIT" },
-      { name: "Meena", class: "8", section: "A", rollNo: 4, stream: "Non-IIT" },
-      { name: "Suresh", class: "8", section: "A", rollNo: 5, stream: "Non-IIT" },
+      { name: "Arjun", class: "8", section: "A", rollNo: "1", stream: "Non-IIT", board: "CBSE" },
+      { name: "Ravi", class: "8", section: "A", rollNo: "2", stream: "Non-IIT", board: "CBSE" },
+      { name: "Kiran", class: "8", section: "A", rollNo: "3", stream: "Non-IIT", board: "CBSE" },
+      { name: "Meena", class: "8", section: "A", rollNo: "4", stream: "Non-IIT", board: "CBSE" },
+      { name: "Suresh", class: "8", section: "A", rollNo: "5", stream: "Non-IIT", board: "CBSE" },
       // Section B
-      { name: "Sneha", class: "8", section: "B", rollNo: 6, stream: "Non-IIT" },
-      { name: "Pooja", class: "8", section: "B", rollNo: 7, stream: "Non-IIT" },
-      { name: "Rahul", class: "8", section: "B", rollNo: 8, stream: "Non-IIT" },
-      { name: "Anjali", class: "8", section: "B", rollNo: 9, stream: "Non-IIT" },
-      { name: "Vikas", class: "8", section: "B", rollNo: 10, stream: "Non-IIT" },
+      { name: "Sneha", class: "8", section: "B", rollNo: "6", stream: "Non-IIT", board: "CBSE" },
+      { name: "Pooja", class: "8", section: "B", rollNo: "7", stream: "Non-IIT", board: "CBSE" },
+      { name: "Rahul", class: "8", section: "B", rollNo: "8", stream: "Non-IIT", board: "CBSE" },
+      { name: "Anjali", class: "8", section: "B", rollNo: "9", stream: "Non-IIT", board: "CBSE" },
+      { name: "Vikas", class: "8", section: "B", rollNo: "10", stream: "Non-IIT", board: "CBSE" },
       // Section C
-      { name: "Deepak", class: "8", section: "C", rollNo: 11, stream: "Non-IIT" },
-      { name: "Neha", class: "8", section: "C", rollNo: 12, stream: "Non-IIT" },
-      { name: "Rohit", class: "8", section: "C", rollNo: 13, stream: "Non-IIT" },
-      { name: "Kavya", class: "8", section: "C", rollNo: 14, stream: "Non-IIT" },
-      { name: "Aman", class: "8", section: "C", rollNo: 15, stream: "Non-IIT" }
+      { name: "Deepak", class: "8", section: "C", rollNo: "11", stream: "Non-IIT", board: "CBSE" },
+      { name: "Neha", class: "8", section: "C", rollNo: "12", stream: "Non-IIT", board: "CBSE" },
+      { name: "Rohit", class: "8", section: "C", rollNo: "13", stream: "Non-IIT", board: "CBSE" },
+      { name: "Kavya", class: "8", section: "C", rollNo: "14", stream: "Non-IIT", board: "CBSE" },
+      { name: "Aman", class: "8", section: "C", rollNo: "15", stream: "Non-IIT", board: "CBSE" }
     ]
 
     const result = await bulkAddStudents(studentsToSeed)
@@ -312,6 +351,42 @@ const AdminDashboard = () => {
       toast.error('Failed to seed: ' + result.error)
     }
     setIsSeeding(false)
+  }
+
+  // Debug function to test Firestore access
+  const testFirestoreAccess = async () => {
+    try {
+      console.log('Admin: Testing Firestore access...')
+      
+      // Test 1: Get all students
+      const allQuery = query(collection(db, 'students'))
+      const allSnapshot = await getDocs(allQuery)
+      console.log(`Admin: Total students in collection: ${allSnapshot.size}`)
+      
+      if (allSnapshot.size > 0) {
+        const sampleDocs = allSnapshot.docs.slice(0, 3).map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        console.log('Admin: Sample student documents:', sampleDocs)
+      }
+      
+      // Test 2: Try filtered query if filters are set
+      if (filter.class && filter.section) {
+        const filteredQuery = query(
+          collection(db, 'students'),
+          where('class', '==', filter.class),
+          where('section', '==', filter.section)
+        )
+        const filteredSnapshot = await getDocs(filteredQuery)
+        console.log(`Admin: Filtered students (Class ${filter.class}, Section ${filter.section}): ${filteredSnapshot.size}`)
+      }
+      
+      toast.success('Admin: Check console for Firestore debug info')
+    } catch (error) {
+      console.error('Admin: Firestore test failed:', error)
+      toast.error('Firestore access failed: ' + error.message)
+    }
   }
 
   const handleApproveUser = async (userId, role) => {
@@ -603,6 +678,13 @@ const AdminDashboard = () => {
                       >
                         {isSeeding ? 'Seeding...' : '🌱 Seed Sample Students (Class 8)'}
                       </button>
+                      <button
+                        onClick={testFirestoreAccess}
+                        className="ml-2 bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-xl border-2 border-gray-200 hover:bg-gray-200 transition-colors whitespace-nowrap"
+                        title="Debug: Test Firestore connection"
+                      >
+                        🔍 Debug
+                      </button>
                     </div>
 
                     {students.length > 0 ? (
@@ -679,12 +761,37 @@ const AdminDashboard = () => {
                         disabled
                         className="bg-purple-100 text-purple-600 font-bold py-2 px-6 rounded-xl shadow-sm opacity-70 cursor-not-allowed"
                       >
-                        {filter.date && filter.class && filter.section && filter.timeSlot ? 'Live Sync Active' : 'Select All Filters'}
+                        {filter.date && filter.class ? 'Live Sync Active' : 'Select Date & Class'}
                       </button>
                     </div>
 
                     {attendanceReports.length > 0 ? (
                       <div className="space-y-6">
+                        {/* Section-wise Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                          {sections.map(section => {
+                            const sectionReports = attendanceReports.filter(r => r.section === section)
+                            if (sectionReports.length === 0) return null
+                            
+                            const totalStudents = sectionReports.reduce((sum, r) => sum + r.records.length, 0)
+                            const totalPresent = sectionReports.reduce((sum, r) => sum + r.records.filter(rec => rec.present).length, 0)
+                            const totalAbsent = totalStudents - totalPresent
+                            
+                            return (
+                              <div key={section} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                                <h5 className="font-bold text-gray-700 mb-2">Section {section}</h5>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-green-600 font-semibold">Present: {totalPresent}</span>
+                                  <span className="text-red-600 font-semibold">Absent: {totalAbsent}</span>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-500">
+                                  Total: {totalStudents} students
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        
                         {attendanceReports.map(report => (
                           <div key={report.id} className="border border-gray-100 rounded-2xl p-6 bg-gray-50 shadow-sm">
                             <div className="flex justify-between items-start mb-6 border-b border-gray-200 pb-4">
@@ -696,12 +803,20 @@ const AdminDashboard = () => {
                                 <p className="text-sm text-purple-600 font-body mt-1">Faculty: {report.facultyName || 'Unknown'}</p>
                               </div>
                               <div className="text-right">
-                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-bold uppercase">
-                                  Present: {report.records.filter(r => r.present).length}
-                                </span>
-                                <span className="ml-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-bold uppercase">
-                                  Absent: {report.records.filter(r => !r.present).length}
-                                </span>
+                                <div className="mb-2">
+                                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-bold uppercase">
+                                    Present: {report.records.filter(r => r.present).length}
+                                  </span>
+                                  <span className="ml-2 bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-bold uppercase">
+                                    Absent: {report.records.filter(r => !r.present).length}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => exportAttendanceToExcel(report)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                  📊 Export Excel
+                                </button>
                               </div>
                             </div>
                             <div className="overflow-x-auto">
@@ -738,7 +853,7 @@ const AdminDashboard = () => {
                         ))}
                       </div>
                     ) : (
-                      <EmptyState message={filter.date && filter.class && filter.section && filter.timeSlot ? "No attendance found for selected time slot" : "Select date, class, section and time slot to view attendance"} icon="📅" />
+                      <EmptyState message={filter.date && filter.class ? "No attendance found for selected date and class" : "Select date and class to view attendance reports"} icon="📅" />
                     )}
                   </div>
                 ) : activeTab === 'analytics' ? (

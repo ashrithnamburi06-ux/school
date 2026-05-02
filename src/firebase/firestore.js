@@ -18,10 +18,10 @@ import { db } from './config'
 
 export const getStudentsByClass = async (className, section) => {
   try {
-    console.log("Fetching students for Class:", String(className), "Section:", section);
+    console.log("Fetching students for Class:", className, "Section:", section);
     const q = query(
       collection(db, 'students'),
-      where('class', '==', String(className)),
+      where('class', '==', String(className)), // Keep as String() for backward compatibility
       where('section', '==', section),
       orderBy('rollNo', 'asc')
     )
@@ -146,7 +146,7 @@ export const checkAttendanceExists = async (className, section, timeSlot, select
     const q = query(
       collection(db, 'attendance'),
       where('date', '==', dateToCheck),
-      where('class', '==', String(className)),
+      where('class', '==', String(className)), // Keep as String() for backward compatibility
       where('section', '==', section),
       where('board', '==', board),
       where('timeSlot', '==', timeSlot),
@@ -166,7 +166,7 @@ export const submitAttendance = async (attendanceData) => {
     const q = query(
       collection(db, 'attendance'),
       where('date', '==', dateToCheck),
-      where('class', '==', String(attendanceData.class)),
+      where('class', '==', String(attendanceData.class)), // Keep as String() for backward compatibility
       where('section', '==', attendanceData.section),
       where('board', '==', attendanceData.board || 'CBSE'),
       where('timeSlot', '==', attendanceData.timeSlot),
@@ -250,7 +250,7 @@ export const getAllMarks = async (filters = {}) => {
     let q = collection(db, 'marks');
     const constraints = [];
     
-    if (filters.class) constraints.push(where('class', '==', parseInt(filters.class)));
+    if (filters.class) constraints.push(where('class', '==', String(filters.class))); // Use String() for consistency
     if (filters.section) constraints.push(where('section', '==', filters.section));
     if (filters.subject) constraints.push(where('subject', '==', filters.subject));
     if (filters.testId) constraints.push(where('testId', '==', filters.testId));
